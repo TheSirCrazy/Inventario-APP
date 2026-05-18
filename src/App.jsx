@@ -80,38 +80,98 @@ export default function App() {
 
   // CRIAR LEVA
   const createCampaign = () => {
-    if (!newCampaign.trim()) return;
-
-    const newItem = {
-      id: Date.now(),
-      name: newCampaign,
-      stores: [],
-    };
-
-    setCampaigns((prev) => [...prev, newItem]);
-
-    setNewCampaign("");
-  };
-
-  // EXCLUIR LEVA
-  const deleteCampaign = (id) => {
-    const confirmDelete = window.confirm(
-      "Deseja excluir esta leva?"
+    const campaignName = prompt(
+      "Digite o nome da nova leva de inventário:"
     );
-
-    if (!confirmDelete) return;
-
-    setCampaigns((prev) =>
-      prev.filter((c) => c.id !== id)
-    );
-
-    if (
-      selectedCampaign &&
-      selectedCampaign.id === id
-    ) {
-      setSelectedCampaign(null);
-      setActiveTab("campaigns");
+  
+    if (!campaignName) {
+      return;
     }
+  
+    const importFile = window.confirm(
+      "Deseja importar um arquivo agora?\n\nOK = Sim\nCancelar = Criar vazio"
+    );
+  
+    const createNewCampaign = (
+      importedStores = []
+    ) => {
+      const newItem = {
+        id: Date.now(),
+        name: campaignName,
+        stores: importedStores,
+      };
+  
+      setCampaigns((prev) => [
+        ...prev,
+        newItem,
+      ]);
+  
+      alert(
+        "Leva criada com sucesso!"
+      );
+    };
+  
+    // SE NÃO QUISER IMPORTAR
+    if (!importFile) {
+      createNewCampaign();
+      return;
+    }
+  
+    // CRIAR INPUT DE ARQUIVO
+    const input =
+      document.createElement("input");
+  
+    input.type = "file";
+  
+    input.accept = ".txt,.csv";
+  
+    input.onchange = (event) => {
+      const file =
+        event.target.files[0];
+  
+      if (!file) {
+        createNewCampaign();
+        return;
+      }
+  
+      const reader =
+        new FileReader();
+  
+      reader.onload = (e) => {
+        const text = e.target.result;
+  
+        const lines = text
+          .split(/\r?\n/)
+          .map((line) =>
+            line.trim()
+          )
+          .filter(
+            (line) => line !== ""
+          );
+  
+        const importedStores =
+          lines.map(
+            (line, index) => ({
+              id:
+                Date.now() + index,
+              name: line,
+              address: "",
+              manager: "",
+              date: "",
+              completed: false,
+              notes: "",
+            })
+          );
+  
+        createNewCampaign(
+          importedStores
+        );
+      };
+  
+      reader.readAsText(file);
+    };
+  
+    input.click();
   };
 
   // ADICIONAR LOJA MANUAL
@@ -411,36 +471,34 @@ export default function App() {
         paddingBottom: "100px",
       }}
     >
-      {/* HEADER */}
-      <div
-        style={{
-          background: "white",
-          padding: "20px",
-          borderBottom:
-            "1px solid #e5e7eb",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "30px",
-          }}
-        >
-          Inventários
-        </h1>
+{/* HEADER */}
+<div
+  style={{
+    background: "#00a675",
+    padding: "20px",
+    borderBottom: "1px solid #e5e7eb",
+  }}
+>
+  <h1
+    style={{
+      margin: 0,
+      fontSize: "30px",
+      color: "white",
+    }}
+  >
+    Inventários
+  </h1>
 
-        <p
-          style={{
-            color: "#6b7280",
-            marginTop: "6px",
-          }}
-        >
-          Controle corporativo
-        </p>
-      </div>
+  <p
+    style={{
+      color: "white",
+      marginTop: "6px",
+      opacity: 0.9,
+    }}
+  >
+    Controle corporativo
+  </p>
+</div>
 
       {/* CAMPANHAS */}
       {activeTab === "campaigns" && (
@@ -1074,7 +1132,7 @@ export default function App() {
                 : "#666",
           }}
         >
-          🏪 Lojas
+          🏪 Lojas 
         </button>
 
         <button
@@ -1094,9 +1152,10 @@ export default function App() {
                 : "#666",
           }}
         >
-          ℹ️ Informações
+          ℹ️ Informações de Lojas
         </button>
       </div>
     </div>
   );
 }
+
